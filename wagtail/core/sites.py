@@ -1,19 +1,22 @@
 from django.apps import apps
 from django.db.models import Case, IntegerField, Q, When
 
-MATCH_HOSTNAME_PORT = 0
-MATCH_HOSTNAME_DEFAULT = 1
-MATCH_DEFAULT = 2
-MATCH_HOSTNAME = 3
+MATCH_HOSTNAME_SLUG_PORT = 0
+MATCH_HOSTNAME_PORT = 1
+MATCH_HOSTNAME_DEFAULT = 2
+MATCH_DEFAULT = 3
+MATCH_HOSTNAME = 4
 
 
 def get_site_for_hostname(hostname, slug, port):
     """Return the wagtailcore.Site object for the given hostname and port."""
     Site = apps.get_model('wagtailcore.Site')
-    hostname = "%s/%s" %(hostname,slug)
 
     sites = list(Site.objects.annotate(match=Case(
         # annotate the results by best choice descending
+
+        # put exact hostname+slug+port match first
+        When(hostname=hostname, path_slug=slug, port=port, then=MATCH_HOSTNAME_SLUG_PORT),
 
         # put exact hostname+port match first
         When(hostname=hostname, port=port, then=MATCH_HOSTNAME_PORT),
@@ -39,7 +42,7 @@ def get_site_for_hostname(hostname, slug, port):
     if sites:
 
         # if theres a unique match or hostname (with port or default) match
-        if len(sites) == 1 or sites[0].match in (MATCH_HOSTNAME_PORT, MATCH_HOSTNAME_DEFAULT):
+        if len(sites) == 1 or sites[0].match in (MATCH_HOSTNAME_SLUG_PORT, MATCH_HOSTNAME_PORT, MATCH_HOSTNAME_DEFAULT):
             return sites[0]
 
         # if there is a default match with a different hostname, see if

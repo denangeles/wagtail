@@ -44,6 +44,8 @@ class SiteManager(models.Manager):
 
 class Site(models.Model):
     hostname = models.CharField(verbose_name=_('hostname'), max_length=255, db_index=True)
+    path_slug = models.CharField(verbose_name=_('path slug'), max_length=255, db_index=True, blank=True, default='',
+                                 help_text='Optional. Set a path slug if you would like site functionality on a path site')
     port = models.IntegerField(
         verbose_name=_('port'),
         default=80,
@@ -71,7 +73,7 @@ class Site(models.Model):
     objects = SiteManager()
 
     class Meta:
-        unique_together = ('hostname', 'port')
+        unique_together = ('hostname', 'path_slug', 'port')
         verbose_name = _('site')
         verbose_name_plural = _('sites')
 
@@ -173,18 +175,8 @@ class Site(models.Model):
         return result
 
     @property
-    def path_slug(self):
-        try:
-            return [s for s in self.hostname.split('/', ) if s][1]
-        except IndexError:
-            return False
-
-    @property
     def is_path_site(self):
-
-        if len([s for s in self.hostname.split('/', ) if s]) > 1:
-            return True
-        return False
+        return True if self.path_slug else False
 
 
 PAGE_MODEL_CLASSES = []
