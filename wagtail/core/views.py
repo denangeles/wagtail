@@ -10,10 +10,15 @@ from wagtail.core.models import Page, PageViewRestriction
 def serve(request, path):
     # we need a valid Site object corresponding to this request (set in wagtail.core.middleware.SiteMiddleware)
     # in order to proceed
-    if not request.site:
+
+    site = request.site
+    if not site:
         raise Http404
 
     path_components = [component for component in path.split('/') if component]
+    # Remove path site
+    if site.is_path_site:
+        del path_components[0]
     page, args, kwargs = request.site.root_page.specific.route(request, path_components)
 
     for fn in hooks.get_hooks('before_serve_page'):

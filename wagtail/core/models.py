@@ -113,11 +113,16 @@ class Site(models.Model):
             hostname = None
 
         try:
+            slug = [s for s in request.path.split('/', ) if s][0]
+        except IndexError:
+            slug = None
+
+        try:
             port = request.get_port()
         except (AttributeError, KeyError):
             port = request.META.get('SERVER_PORT')
 
-        return get_site_for_hostname(hostname, port)
+        return get_site_for_hostname(hostname, slug, port)
 
     @property
     def root_url(self):
@@ -166,6 +171,20 @@ class Site(models.Model):
             cache.set('wagtail_site_root_paths', result, 3600)
 
         return result
+
+    @property
+    def path_slug(self):
+        try:
+            return [s for s in self.hostname.split('/', ) if s][1]
+        except IndexError:
+            return False
+
+    @property
+    def is_path_site(self):
+
+        if len([s for s in self.hostname.split('/', ) if s]) > 1:
+            return True
+        return False
 
 
 PAGE_MODEL_CLASSES = []

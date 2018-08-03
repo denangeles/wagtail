@@ -7,9 +7,10 @@ MATCH_DEFAULT = 2
 MATCH_HOSTNAME = 3
 
 
-def get_site_for_hostname(hostname, port):
+def get_site_for_hostname(hostname, slug, port):
     """Return the wagtailcore.Site object for the given hostname and port."""
     Site = apps.get_model('wagtailcore.Site')
+    hostname = "%s/%s" %(hostname,slug)
 
     sites = list(Site.objects.annotate(match=Case(
         # annotate the results by best choice descending
@@ -36,6 +37,7 @@ def get_site_for_hostname(hostname, port):
     ))
 
     if sites:
+
         # if theres a unique match or hostname (with port or default) match
         if len(sites) == 1 or sites[0].match in (MATCH_HOSTNAME_PORT, MATCH_HOSTNAME_DEFAULT):
             return sites[0]
@@ -45,5 +47,7 @@ def get_site_for_hostname(hostname, port):
         # otherwise we use the default
         if sites[0].match == MATCH_DEFAULT:
             return sites[len(sites) == 2]
+
+
 
     raise Site.DoesNotExist()
